@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, User, Bell, Shield, Database, Palette, ChevronRight, Utensils, Check, Save } from 'lucide-react';
+import React from 'react';
+import { User, Bell, Shield, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { supabase } from '../lib/supabase';
-import { PRODUCTS } from '../data/cardapio';
 
 const sections = [
   {
@@ -32,55 +30,6 @@ const sections = [
 ];
 
 const Settings = () => {
-  const [dailySpecials, setDailySpecials] = useState([]);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
-
-  useEffect(() => {
-    fetchDailySpecials();
-  }, []);
-
-  const fetchDailySpecials = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('configuracoes')
-        .select('valor')
-        .eq('chave', 'pratos_do_dia')
-        .single();
-      
-      if (data && data.valor) {
-        setDailySpecials(data.valor);
-      }
-    } catch (err) {
-      console.error("Erro ao carregar pratos do dia:", err);
-    }
-  };
-
-  const toggleSpecial = (id) => {
-    setDailySpecials(prev => 
-      prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
-    );
-  };
-
-  const saveSpecials = async () => {
-    setIsSaving(true);
-    setSaveMessage('');
-    try {
-      const { error } = await supabase
-        .from('configuracoes')
-        .upsert({ chave: 'pratos_do_dia', valor: dailySpecials });
-        
-      if (error) throw error;
-      setSaveMessage('Cardápio do dia atualizado com sucesso!');
-      setTimeout(() => setSaveMessage(''), 3000);
-    } catch (err) {
-      console.error("Erro ao salvar:", err);
-      setSaveMessage('Erro ao salvar. Verifique se você rodou o SQL de configurações.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   return (
     <div style={{ paddingBottom: '2rem' }}>
       {/* Header */}
@@ -127,62 +76,6 @@ const Settings = () => {
         <button className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.8rem' }}>
           Editar perfil
         </button>
-      </motion.div>
-
-      {/* Cardápio do Dia Config */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="card"
-        style={{ marginBottom: '1.5rem', maxWidth: '720px', border: '1.5px solid var(--primary)', background: 'var(--amber-50)' }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-          <div style={{ background: 'var(--primary-light)', padding: '0.5rem', borderRadius: 'var(--radius-md)', color: 'var(--amber-700)' }}>
-            <Utensils size={20} />
-          </div>
-          <div>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>Cardápio do Dia</h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Selecione os pratos que estarão em destaque hoje no cardápio dos clientes.</p>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-          {PRODUCTS.map(product => {
-            const isSelected = dailySpecials.includes(product.id);
-            return (
-              <button
-                key={product.id}
-                onClick={() => toggleSpecial(product.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)',
-                  background: isSelected ? 'var(--primary)' : 'var(--surface)',
-                  color: isSelected ? 'white' : 'var(--text-secondary)',
-                  border: `1.5px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
-                  fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                  <span>{product.name}</span>
-                {isSelected && <Check size={14} />}
-              </button>
-            )
-          })}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: saveMessage.includes('Erro') ? 'var(--danger)' : 'var(--success)' }}>
-            {saveMessage}
-          </span>
-          <button 
-            className="btn btn-primary" 
-            onClick={saveSpecials}
-            disabled={isSaving}
-          >
-            {isSaving ? 'Salvando...' : <><Save size={16} /> Salvar Cardápio de Hoje</>}
-          </button>
-        </div>
       </motion.div>
 
       {/* Settings list */}
